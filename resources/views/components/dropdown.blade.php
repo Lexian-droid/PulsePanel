@@ -49,7 +49,7 @@ default => 'w-48',
             :style="align === 'left'
                 ? `position:absolute; top:${y}px; left:${x}px;`
                 : `position:absolute; top:${y}px; left:${x}px; transform: translateX(-100%);`"
-            class="{{ $widthClass }} {{ $originClass }} z-[9999] rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5 dark:bg-gray-800 dark:ring-white/10"
+            class="{{ $widthClass }} {{ $originClass }} z-9999 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5 dark:bg-gray-800 dark:ring-white/10"
             x-cloak>
             {{ $slot }}
         </div>
