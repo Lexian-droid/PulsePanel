@@ -13,11 +13,95 @@
 
     {{-- Charts --}}
     <x-grid cols="2" class="mb-6">
-        <x-chart-container label="Traffic Sources" height="300px" />
-        <x-chart-container label="Top Pages" height="300px" />
+        <x-chart-container label="Traffic Sources" height="300px" :config="[
+            'type' => 'doughnut',
+            'data' => [
+                'labels' => ['Direct', 'Organic Search', 'Social Media', 'Referral', 'Email'],
+                'datasets' => [
+                    [
+                        'data' => [35, 28, 18, 12, 7],
+                        'backgroundColor' => ['#3b82f6', '#22c55e', '#8b5cf6', '#f59e0b', '#ef4444'],
+                        'borderWidth' => 0,
+                        'hoverOffset' => 8,
+                    ],
+                ],
+            ],
+            'options' => [
+                'responsive' => true,
+                'maintainAspectRatio' => false,
+                'cutout' => '65%',
+                'plugins' => [
+                    'legend' => ['position' => 'bottom', 'labels' => ['usePointStyle' => true, 'padding' => 16]],
+                ],
+            ],
+        ]" />
+        <x-chart-container label="Top Pages" height="300px" :config="[
+            'type' => 'bar',
+            'data' => [
+                'labels' => ['/dashboard', '/products', '/pricing', '/about', '/contact'],
+                'datasets' => [
+                    [
+                        'label' => 'Page Views',
+                        'data' => [24521, 18203, 12847, 9102, 6431],
+                        'backgroundColor' => ['rgba(59, 130, 246, 0.7)', 'rgba(34, 197, 94, 0.7)', 'rgba(139, 92, 246, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(239, 68, 68, 0.7)'],
+                        'borderColor' => ['#3b82f6', '#22c55e', '#8b5cf6', '#f59e0b', '#ef4444'],
+                        'borderWidth' => 1,
+                        'borderRadius' => 6,
+                    ],
+                ],
+            ],
+            'options' => [
+                'indexAxis' => 'y',
+                'responsive' => true,
+                'maintainAspectRatio' => false,
+                'plugins' => ['legend' => ['display' => false]],
+                'scales' => [
+                    'x' => ['beginAtZero' => true, 'grid' => ['color' => 'rgba(156, 163, 175, 0.15)']],
+                    'y' => ['grid' => ['display' => false]],
+                ],
+            ],
+        ]" />
     </x-grid>
 
-    <x-chart-container label="Visitors Over Time" height="350px" class="mb-6" />
+    <x-chart-container label="Visitors Over Time" height="350px" class="mb-6" :config="[
+        'type' => 'line',
+        'data' => [
+            'labels' => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            'datasets' => [
+                [
+                    'label' => 'This Week',
+                    'data' => [1420, 1620, 1890, 1750, 2100, 1340, 980, 1580, 1720, 2010, 1890, 2200, 1450, 1050],
+                    'borderColor' => '#3b82f6',
+                    'backgroundColor' => 'rgba(59, 130, 246, 0.08)',
+                    'fill' => true,
+                    'tension' => 0.4,
+                    'pointRadius' => 4,
+                    'pointBackgroundColor' => '#3b82f6',
+                ],
+                [
+                    'label' => 'Last Week',
+                    'data' => [1200, 1380, 1550, 1420, 1800, 1100, 820, 1350, 1480, 1700, 1600, 1900, 1200, 900],
+                    'borderColor' => '#9ca3af',
+                    'backgroundColor' => 'rgba(156, 163, 175, 0.08)',
+                    'fill' => true,
+                    'tension' => 0.4,
+                    'borderDash' => [5, 5],
+                    'pointRadius' => 3,
+                    'pointBackgroundColor' => '#9ca3af',
+                ],
+            ],
+        ],
+        'options' => [
+            'responsive' => true,
+            'maintainAspectRatio' => false,
+            'interaction' => ['mode' => 'index', 'intersect' => false],
+            'plugins' => ['legend' => ['position' => 'bottom', 'labels' => ['usePointStyle' => true, 'padding' => 16]]],
+            'scales' => [
+                'y' => ['beginAtZero' => true, 'grid' => ['color' => 'rgba(156, 163, 175, 0.15)']],
+                'x' => ['grid' => ['display' => false]],
+            ],
+        ],
+    ]" />
 
     {{-- Summary Table --}}
     <x-card>
