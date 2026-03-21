@@ -1,0 +1,14 @@
+{
+    "agents": [
+        "copilot"
+    ],
+    "packages": [
+        "laravel/fortify"
+    ],
+    "skills": [
+        "livewire-development",
+        "pest-testing",
+        "tailwindcss-development",
+        "fortify-development"
+    ]
+}
