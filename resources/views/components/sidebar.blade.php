@@ -26,6 +26,22 @@
             </x-sidebar-link>
         </x-sidebar-section>
 
+        @can('manage users')
+        <x-sidebar-section label="Administration">
+            <x-sidebar-link href="{{ route('dashboard.roles') }}" :active="request()->routeIs('dashboard.roles')" icon="cog">
+                Role Editor
+            </x-sidebar-link>
+        </x-sidebar-section>
+        @endcan
+
+        @if(config('pulsepanel.features.teams'))
+        <x-sidebar-section label="Organization">
+            <x-sidebar-link href="{{ route('dashboard.teams') }}" :active="request()->routeIs('dashboard.teams*')" icon="cube">
+                Teams
+            </x-sidebar-link>
+        </x-sidebar-section>
+        @endif
+
         <x-sidebar-section label="Account">
             <x-sidebar-link href="{{ route('dashboard.settings') }}" :active="request()->routeIs('dashboard.settings')" icon="cog">
                 Settings

@@ -41,5 +41,12 @@
                 </x-button>
             </form>
         </div>
+
+        @if(config('pulsepanel.features.registration') && Route::has('register'))
+        <p class="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
+            Don't have an account?
+            <a href="{{ route('register') }}" class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400">Sign up</a>
+        </p>
+        @endif
     </div>
 </x-layouts.guest>

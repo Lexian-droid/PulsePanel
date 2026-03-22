@@ -143,9 +143,10 @@ return [
     |
     */
 
-    'features' => [
+    'features' => array_filter([
         Features::updateProfileInformation(),
         Features::updatePasswords(),
-    ],
+        config('pulsepanel.features.registration') ? Features::registration() : null,
+    ]),
 
 ];

@@ -15,12 +15,18 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->create([
+        $this->call(RoleAndPermissionSeeder::class);
+
+        $owner = User::factory()->create([
             'name' => 'Admin User',
             'email' => 'admin@pulsepanel.test',
             'password' => bcrypt('password'),
         ]);
 
-        User::factory(14)->create();
+        $owner->assignRole('owner');
+
+        User::factory(14)->create()->each(function (User $user) {
+            $user->assignRole(config('pulsepanel.default_role', 'member'));
+        });
     }
 }
