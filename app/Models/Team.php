@@ -58,4 +58,30 @@ class Team extends Model
     {
         return $this->invitations()->pending();
     }
+
+    /**
+     * Get the ordinary team roles the user may assign.
+     *
+     * Ownership is intentionally excluded from this list.
+     */
+    public function assignableRolesFor(User $user): array
+    {
+        $hierarchy = config('pulsepanel.role_hierarchy', []);
+        $membership = $this->users->firstWhere('id', $user->id);
+        $actorLevel = $membership
+            ? ($hierarchy[$membership->pivot->role] ?? 0)
+            : ($user->can('manage teams') ? max($hierarchy) : 0);
+
+        return collect($hierarchy)
+            ->reject(fn (int $level, string $role): bool => $role === 'owner')
+            ->filter(fn (int $level): bool => $level < $actorLevel)
+            ->keys()
+            ->values()
+            ->all();
+    }
+
+    public function canAssignRole(User $user, string $role): bool
+    {
+        return in_array($role, $this->assignableRolesFor($user), true);
+    }
 }

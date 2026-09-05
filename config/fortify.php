@@ -146,7 +146,7 @@ return [
     'features' => array_filter([
         Features::updateProfileInformation(),
         Features::updatePasswords(),
-        config('pulsepanel.features.registration') ? Features::registration() : null,
+        env('PULSEPANEL_REGISTRATION', false) ? Features::registration() : null,
     ]),
 
 ];

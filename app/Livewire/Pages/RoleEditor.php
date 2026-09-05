@@ -3,6 +3,7 @@
 namespace App\Livewire\Pages;
 
 use App\Models\User;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -57,9 +58,19 @@ class RoleEditor extends Component
             return;
         }
 
+        $validated = $this->validate([
+            'selectedRole' => ['required', Rule::exists('roles', 'name')],
+        ]);
+
         $hierarchy = config('pulsepanel.role_hierarchy', []);
-        $newRoleLevel = $hierarchy[$this->selectedRole] ?? 0;
+        $newRoleLevel = $hierarchy[$validated['selectedRole']] ?? null;
         $currentUserLevel = auth()->user()->roleLevel();
+
+        if ($newRoleLevel === null) {
+            session()->flash('error', 'The selected role is not assignable.');
+
+            return;
+        }
 
         if ($newRoleLevel >= $currentUserLevel) {
             session()->flash('error', 'You cannot assign a role equal to or higher than your own.');
@@ -68,9 +79,9 @@ class RoleEditor extends Component
             return;
         }
 
-        $target->syncRoles([$this->selectedRole]);
+        $target->syncRoles([$validated['selectedRole']]);
 
-        session()->flash('success', "Updated {$target->name}'s role to {$this->selectedRole}.");
+        session()->flash('success', "Updated {$target->name}'s role to {$validated['selectedRole']}.");
         $this->cancelEdit();
     }
 
@@ -89,8 +100,8 @@ class RoleEditor extends Component
             ->with('roles')
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%')
-                        ->orWhere('email', 'like', '%' . $this->search . '%');
+                    $q->where('name', 'like', '%'.$this->search.'%')
+                        ->orWhere('email', 'like', '%'.$this->search.'%');
                 });
             })
             ->when($this->filterRole, function ($query) {

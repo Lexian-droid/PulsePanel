@@ -136,6 +136,23 @@ it('prevents assigning a role equal to or higher than the current user', functio
     expect($member->fresh()->hasRole('member'))->toBeTrue();
 });
 
+it('rejects an empty role without removing the existing role', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+
+    $member = User::factory()->create();
+    $member->assignRole('member');
+
+    Livewire::actingAs($admin)
+        ->test(RoleEditor::class)
+        ->call('editUser', $member->id)
+        ->set('selectedRole', '')
+        ->call('updateRole')
+        ->assertHasErrors(['selectedRole' => 'required']);
+
+    expect($member->fresh()->hasRole('member'))->toBeTrue();
+});
+
 it('only shows assignable roles below the current user level', function () {
     $admin = User::factory()->create();
     $admin->assignRole('admin');

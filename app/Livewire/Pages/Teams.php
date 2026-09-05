@@ -6,6 +6,7 @@ use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -25,11 +26,6 @@ class Teams extends Component
 
     public string $inviteRole = 'member';
 
-    /**
-     * @var list<string>
-     */
-    protected array $teamRoles = ['owner', 'admin', 'member'];
-
     public function createTeam(): void
     {
         $currentUser = Auth::user();
@@ -45,13 +41,17 @@ class Teams extends Component
             'description' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $team = Team::query()->create([
-            'owner_id' => $currentUser->id,
-            'name' => $validated['name'],
-            'description' => $validated['description'] ?: null,
-        ]);
+        $team = DB::transaction(function () use ($currentUser, $validated): Team {
+            $team = Team::query()->create([
+                'owner_id' => $currentUser->id,
+                'name' => $validated['name'],
+                'description' => $validated['description'] ?: null,
+            ]);
 
-        $team->users()->attach($currentUser->id, ['role' => 'owner']);
+            $team->users()->attach($currentUser->id, ['role' => 'owner']);
+
+            return $team;
+        });
 
         $this->reset('name', 'description');
 
@@ -99,7 +99,7 @@ class Teams extends Component
 
         $validated = $this->validate([
             'inviteEmail' => ['required', 'email', 'max:255'],
-            'inviteRole' => ['required', Rule::in($this->teamRoles)],
+            'inviteRole' => ['required', Rule::in($team->assignableRolesFor($currentUser))],
         ]);
 
         $email = Str::lower($validated['inviteEmail']);
@@ -152,7 +152,7 @@ class Teams extends Component
             return;
         }
 
-        if (! in_array($role, $this->teamRoles, true)) {
+        if (! $team->canAssignRole($currentUser, $role)) {
             session()->flash('error', 'Invalid team role selected.');
 
             return;
@@ -168,27 +168,52 @@ class Teams extends Component
 
         $actingUserId = $currentUser->id;
 
-        if ($member->id === $actingUserId && $role !== 'owner') {
-            session()->flash('error', 'You cannot demote yourself from owner in this screen.');
+        if ($member->id === $actingUserId) {
+            session()->flash('error', 'You cannot change your own team role.');
 
             return;
         }
 
-        if ($role === 'owner' && $team->owner_id !== $actingUserId) {
-            session()->flash('error', 'Only the current owner can transfer ownership.');
+        if ($member->id === $team->owner_id) {
+            session()->flash('error', 'Transfer ownership explicitly before changing the owner.');
 
             return;
-        }
-
-        if ($role === 'owner') {
-            $team->users()->updateExistingPivot($actingUserId, ['role' => 'admin']);
-            $team->owner_id = $member->id;
-            $team->save();
         }
 
         $team->users()->updateExistingPivot($member->id, ['role' => $role]);
 
         session()->flash('success', "Updated {$member->name}'s team role to {$role}.");
+    }
+
+    public function transferOwnership(int $teamId, int $userId): void
+    {
+        $currentUser = Auth::user();
+
+        if (! $currentUser) {
+            abort(403);
+        }
+
+        $memberName = DB::transaction(function () use ($teamId, $userId, $currentUser): string {
+            $team = Team::query()->lockForUpdate()->findOrFail($teamId);
+
+            if ($team->owner_id !== $currentUser->id) {
+                abort(403);
+            }
+
+            $member = $team->users()->where('users.id', $userId)->firstOrFail();
+
+            if ($member->id === $currentUser->id) {
+                abort(422, 'The current owner already owns this team.');
+            }
+
+            $team->users()->updateExistingPivot($currentUser->id, ['role' => 'admin']);
+            $team->users()->updateExistingPivot($member->id, ['role' => 'owner']);
+            $team->update(['owner_id' => $member->id]);
+
+            return $member->name;
+        });
+
+        session()->flash('success', "Transferred ownership of the team to {$memberName}.");
     }
 
     public function removeMember(int $teamId, int $userId): void
@@ -325,8 +350,12 @@ class Teams extends Component
             ->latest()
             ->get();
 
-        $teamRoleOptions = collect($this->teamRoles)
-            ->mapWithKeys(fn(string $role) => [$role => Str::headline($role)]);
+        $teamRoleOptions = $teams->mapWithKeys(function (Team $team) use ($currentUser): array {
+            return [
+                $team->id => collect($team->assignableRolesFor($currentUser))
+                    ->mapWithKeys(fn (string $role): array => [$role => Str::headline($role)]),
+            ];
+        });
 
         return view('dashboard.teams', [
             'teams' => $teams,

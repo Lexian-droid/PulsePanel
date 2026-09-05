@@ -41,7 +41,7 @@
 
     @if($myInvitations->isNotEmpty())
     <x-card class="mb-6">
-        <h3 class="text-base font-semibold text-gray-900 dark:text-white">Invitations For You</h3>
+        <h3 class="text-base font-semibold text-gray-900 dark:text-white">Invitations For YouAAAAAAAAAA</h3>
         <div class="mt-3 space-y-3">
             @foreach($myInvitations as $invitation)
             <div class="flex flex-col gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between">
@@ -65,7 +65,7 @@
         <x-slot:description>You're not a member of any teams. Teams can be created to organize users, projects, and resources.</x-slot:description>
     </x-empty-state>
     @else
-    <x-grid cols="3">
+    <x-grid cols="1">
         @foreach($teams as $team)
         <x-card>
             <div class="space-y-4">
@@ -94,14 +94,18 @@
                             <p class="text-xs text-gray-500 dark:text-gray-400">{{ $member->email }}</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            @if($team->can_be_managed)
+                            @if($team->can_be_managed && $member->id !== auth()->id() && $teamRoleOptions[$team->id]->has($member->pivot->role))
                             <x-select wire:change="updateMemberRole({{ $team->id }}, {{ $member->id }}, $event.target.value)">
-                                @foreach($teamRoleOptions as $value => $label)
+                                @foreach($teamRoleOptions[$team->id] as $value => $label)
                                 <option value="{{ $value }}" @selected($member->pivot->role === $value)>{{ $label }}</option>
                                 @endforeach
                             </x-select>
                             @else
                             <x-badge color="gray">{{ Str::headline($member->pivot->role) }}</x-badge>
+                            @endif
+
+                            @if($team->can_be_managed && $team->owner_id === auth()->id() && $member->id !== auth()->id())
+                            <x-button size="sm" variant="ghost" wire:click="transferOwnership({{ $team->id }}, {{ $member->id }})" wire:confirm="Transfer ownership of {{ $team->name }} to {{ $member->name }}?">Transfer Ownership</x-button>
                             @endif
 
                             @if($team->can_be_managed && $member->id !== auth()->id() && $team->owner_id !== $member->id)
@@ -128,7 +132,7 @@
                         <div>
                             <label class="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Role</label>
                             <x-select wire:model="inviteRole">
-                                @foreach($teamRoleOptions as $value => $label)
+                                @foreach($teamRoleOptions[$team->id] as $value => $label)
                                 <option value="{{ $value }}">{{ $label }}</option>
                                 @endforeach
                             </x-select>

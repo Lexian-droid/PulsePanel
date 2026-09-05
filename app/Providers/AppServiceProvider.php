@@ -31,13 +31,9 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::define('manage-team', function (User $user, Team $team): bool {
-            if ($user->can('manage teams')) {
-                return true;
-            }
-
-            return $team->users()
+            return $user->can('manage teams') || $team->owner_id === $user->id || $team->users()
                 ->where('users.id', $user->id)
-                ->wherePivotIn('role', ['owner', 'admin'])
+                ->wherePivot('role', 'admin')
                 ->exists();
         });
     }

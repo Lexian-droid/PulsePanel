@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
         $owner->assignRole('owner');
 
         User::factory(14)->create()->each(function (User $user) {
+            $user->password = bcrypt('password');
             $user->assignRole(config('pulsepanel.default_role', 'member'));
         });
     }

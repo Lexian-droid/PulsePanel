@@ -114,7 +114,7 @@
 
                 <div class="mt-4">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
-                    <select wire:model="selectedRole"
+                    <select wire:model.live="selectedRole"
                         class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
                         <option value="">Select a role...</option>
                         @foreach($assignableRoles as $role)
@@ -125,7 +125,7 @@
 
                 <div class="mt-6 flex justify-end gap-3">
                     <x-button variant="secondary" wire:click="cancelEdit">Cancel</x-button>
-                    <x-button variant="primary" wire:click="updateRole" :disabled="!$selectedRole">Save</x-button>
+                    <x-button variant="primary" wire:click="updateRole" :disabled="$selectedRole === ''">Save</x-button>
                 </div>
             </div>
         </div>

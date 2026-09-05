@@ -106,3 +106,75 @@ it('allows a team manager to update a member role', function () {
 
     expect($team->users()->where('users.id', $member->id)->first()->pivot->role)->toBe('admin');
 });
+
+it('does not allow a member to assign a peer or higher role', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+
+    $peer = User::factory()->create();
+    $peer->assignRole('admin');
+
+    $team = Team::factory()->create(['owner_id' => $admin->id]);
+    $team->users()->attach($admin->id, ['role' => 'admin']);
+    $team->users()->attach($peer->id, ['role' => 'admin']);
+
+    Livewire::actingAs($admin)
+        ->test(Teams::class)
+        ->call('updateMemberRole', $team->id, $peer->id, 'admin');
+
+    expect($team->users()->where('users.id', $peer->id)->first()->pivot->role)->toBe('admin');
+});
+
+it('does not allow a member to change their own team role', function () {
+    $owner = User::factory()->create();
+    $owner->assignRole('owner');
+
+    $team = Team::factory()->create(['owner_id' => $owner->id]);
+    $team->users()->attach($owner->id, ['role' => 'owner']);
+
+    Livewire::actingAs($owner)
+        ->test(Teams::class)
+        ->call('updateMemberRole', $team->id, $owner->id, 'admin');
+
+    expect($team->users()->where('users.id', $owner->id)->first()->pivot->role)->toBe('owner');
+});
+
+it('transfers ownership atomically through the explicit action', function () {
+    $owner = User::factory()->create();
+    $owner->assignRole('owner');
+
+    $member = User::factory()->create();
+    $member->assignRole('member');
+
+    $team = Team::factory()->create(['owner_id' => $owner->id]);
+    $team->users()->attach($owner->id, ['role' => 'owner']);
+    $team->users()->attach($member->id, ['role' => 'member']);
+
+    Livewire::actingAs($owner)
+        ->test(Teams::class)
+        ->call('transferOwnership', $team->id, $member->id);
+
+    expect($team->fresh()->owner_id)->toBe($member->id);
+    expect($team->users()->where('users.id', $owner->id)->first()->pivot->role)->toBe('admin');
+    expect($team->users()->where('users.id', $member->id)->first()->pivot->role)->toBe('owner');
+    expect($team->users()->wherePivot('role', 'owner')->count())->toBe(1);
+});
+
+it('does not allow a non-owner to transfer ownership', function () {
+    $owner = User::factory()->create();
+    $owner->assignRole('owner');
+
+    $member = User::factory()->create();
+    $member->assignRole('member');
+
+    $team = Team::factory()->create(['owner_id' => $owner->id]);
+    $team->users()->attach($owner->id, ['role' => 'owner']);
+    $team->users()->attach($member->id, ['role' => 'member']);
+
+    Livewire::actingAs($member)
+        ->test(Teams::class)
+        ->call('transferOwnership', $team->id, $member->id)
+        ->assertForbidden();
+
+    expect($team->fresh()->owner_id)->toBe($owner->id);
+});
