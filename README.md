@@ -152,7 +152,7 @@ Add entries in `resources/views/components/sidebar.blade.php`:
 
 ## Tech Stack
 
-- [Laravel 12](https://laravel.com)
+- [Laravel 13](https://laravel.com)
 - [Livewire 4](https://livewire.laravel.com)
 - [Laravel Fortify](https://laravel.com/docs/fortify)
 - [Tailwind CSS v4](https://tailwindcss.com)
